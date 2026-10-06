@@ -66,3 +66,51 @@ def name(f):
 
 def md(s):
     return s.replace('|', '/')
+
+
+# ---- 근거 등급: 기능의 근거 체인(기능 → 목표 UG → IN·RG·H…)에 "조사"·"내부 자료" 출처가 있는가
+SRC_OK = ('조사', '내부 자료')
+SRC_TYPES = ('조사', '내부 자료', '일반 지식(미검증)', '가정')
+
+
+def root_types():
+    """01·02·03번의 뿌리 항목(H, AS, IN, CMP, RG, TC)과 출처 유형을 읽는다."""
+    out = {}
+    for doc in ('01', '02', '03'):
+        for line in read(doc).split('\n'):
+            m = re.match(r'\|\s*((?:H|AS|IN|CMP|RG|TC)-\d+)\s*\|', line)
+            if m:
+                out[m.group(1)] = line.strip().strip('|').split('|')[-1].strip()
+    return out
+
+
+ROOT_TYPE = root_types()
+
+
+def ug_roots():
+    out = {}
+    for line in read('07').split('\n'):
+        m = re.match(r'\|\s*(UG-\d{3})\s*\|', line)
+        if m:
+            last = line.strip().strip('|').split('|')[-1]
+            ids = set(re.findall(r'\b(?:IN|RG|H|TC)-\d+\b', last))
+            out[m.group(1)] = ids
+    return out
+
+
+UG_ROOTS = ug_roots()
+
+
+def chain_roots(f):
+    roots = set()
+    for b in final[f]['basis']:
+        if b.startswith('UG-'):
+            roots |= UG_ROOTS.get(b, set())
+        else:
+            roots.add(b)
+    return roots
+
+
+for _f, _d in final.items():
+    _d['evidence'] = '검증' if any(ROOT_TYPE.get(r) in SRC_OK for r in chain_roots(_f)) else '미검증'
+EVID = collections.Counter(d['evidence'] for d in final.values())

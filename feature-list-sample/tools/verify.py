@@ -212,6 +212,12 @@ for k, t in TXT.items():
             bad_mm.append(k)
 check('Mermaid 블록의 머리말·subgraph/end 짝', not bad_mm, bad_mm)
 
+# ---------------------------------------------------------------- 9. 근거(출처 유형)
+bad_src = [k for k, x in ROOT_TYPE.items() if x not in SRC_TYPES]
+check(f'뿌리 항목 {len(ROOT_TYPE)}개(H·AS·IN·CMP·RG·TC) 모두 유효한 출처 유형', len(ROOT_TYPE) == 77 and not bad_src, bad_src[:5])
+check('32번에 근거 등급 집계가 실제와 일치', has('32', f"| **근거 등급: 검증** | {EVID['검증']} |") and has('32', f"| **근거 등급: 미검증** | {EVID['미검증']} |"))
+print(f"[참고] 근거 등급 — 검증 {EVID['검증']} / 미검증 {EVID['미검증']} (전체 {len(final)}개 기능)\n")
+
 # ---------------------------------------------------------------- 결과
 width = max(len(n) for n, _, _ in results)
 fail = 0
