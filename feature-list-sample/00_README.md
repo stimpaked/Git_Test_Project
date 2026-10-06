@@ -120,6 +120,15 @@ flowchart LR
 | GAP / WT / R35 | 갭 / 워크스루 / 35번 발견 사항 | 34, 35 |
 | PG / CR | 출시 게이트 / 변경요청 | 36 |
 
+## 생성·검증 도구 (tools/)
+
+31~36번과 이 README는 [tools/](tools/)의 프로그램이 기능 명세 데이터에서 만든 문서이고, 1~30번은 직접 작성한 문서입니다. 문서 전체의 ID 연결과 숫자는 검사 프로그램으로 확인합니다. 자세한 설명은 [tools/README.md](tools/README.md)를 보세요.
+
+```bash
+python3 feature-list-sample/tools/verify.py   # ID 연결·숫자 검사 (전부 통과하면 종료 코드 0)
+python3 feature-list-sample/tools/build.py    # 31~36번과 00_README.md 다시 생성
+```
+
 ## 검증 방법과 한계
 
 - **스크립트로 확인한 것:** 후보 355건이 모두 기능 또는 제외 사유로 처리됨(미처리·중복 0건) · 목표 67개의 기능 연결 · 저니 격자 30칸의 목표 연결 · 화면 62개와 기능의 양방향 연결 · `uses`·선후행 참조 무결성과 순환 없음 · 영역·엔티티·목표 배정 · 문서에 적은 숫자 집계.
