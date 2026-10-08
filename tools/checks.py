@@ -686,9 +686,9 @@ def check_deliverable(path, template_path):
                 if not c.strip():
                     res.append(out("CM-K01", F, f"{w} 표:{e['key']}", f"빈 칸: {r[0]} / {col}"))
                     continue
-                if c.startswith("미정") and not all(k in c for k in ("확인처", "담당", "기한")):
+                if _closing(c) == "미정" and not all(k in c for k in ("확인처", "담당", "기한")):
                     res.append(out("CM-K02", F, f"{w} 표:{e['key']}", f"`미정`에 확인처·담당·기한이 없다: {r[0]}"))
-                if c.startswith("해당 없음") and len(c.replace("해당 없음", "").strip(" ():,")) < 2:
+                if _closing(c) == "해당 없음" and len(c.replace("`", "").replace("해당 없음", "").strip(" ():,")) < 2:
                     res.append(out("CM-K02", F, f"{w} 표:{e['key']}", f"`해당 없음`에 사유가 없다: {r[0]}"))
             if e["table"]["header"][-1] == "근거" and r and not r[-1].strip():
                 res.append(out("CM-K03", F, f"{w} 표:{e['key']}", f"근거가 비었다: {r[0]}"))
@@ -719,10 +719,10 @@ def check_evidence(entries, w):
             continue
         for r in t["rows"]:
             for c in r[:-1]:
-                if c.startswith("미정"):
+                if _closing(c) == "미정":
                     n_undecided += 1
             cell = r[-1].strip()
-            if not cell or cell.startswith(("미정", "해당 없음")):
+            if not cell or _closing(cell):
                 continue
             rows += 1
             kinds = []
@@ -739,6 +739,12 @@ def check_evidence(entries, w):
     ratio = f"{weak}/{rows}" if rows else "0/0"
     res.append(out("CM-K06", I, w, f"`미정` {n_undecided}칸, 근거가 모두 일반 지식·가정인 행 {ratio}"))
     return res
+
+
+def _closing(c):
+    """칸이 `미정`·`해당 없음`으로 닫혔는지. 백틱으로 감싼 표기도 같게 본다."""
+    t = c.strip().replace("`", "")
+    return "미정" if t.startswith("미정") else "해당 없음" if t.startswith("해당 없음") else None
 
 
 def terms_in(text):
