@@ -698,9 +698,12 @@ def check_deliverable(path, template_path):
                 res.append(out("CM-K03", F, f"{w} 표:{e['key']}", f"근거가 비었다: {r[0]}"))
         # TP-K11
         if t["hints"]:
+            choice_cols = {k for k, h in t["hints"].items() if h.startswith("선택지")}
             for r in e["table"]["rows"]:
                 for c in r[1:]:
-                    for h in t["hints"].values():
+                    for hk, h in t["hints"].items():
+                        if hk in choice_cols:
+                            continue
                         if len(c) >= 12 and c in h:
                             res.append(out("TP-K11", W, f"{w} 표:{e['key']}", f"값이 힌트의 예시와 같다: {c[:30]}"))
     res += check_evidence(entries, w)
