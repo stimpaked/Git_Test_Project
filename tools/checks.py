@@ -439,6 +439,7 @@ def check_conversions():
         covered_tables, covered_fields = set(), set()
         # 선택 블록 이름
         selects = re.findall(r"^#+ \[선택\]\s*[\d\-.]*\s*(.+)$", _tt, re.M)
+        selects += re.findall(r"^#+ [\d\-.]*\s*(.+)$", _tt, re.M)  # 표 없는 필수 절(예: 다이어그램)의 제목
 
         def refs(cell):
             for m in re.finditer(r"표:(\S+?)(?=[,\s]|$)", cell):
