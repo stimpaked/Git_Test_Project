@@ -57,6 +57,7 @@ def check_templates():
     steps, _ = parse_steps()
     terms = sample_terms()
     seen_fields = {}
+    seen_prefix = {}
     for nn, (p, text, entries, lines, tbls) in template_info().items():
         w = rel(p)
         # K01 구성과 순서
@@ -132,6 +133,16 @@ def check_templates():
                 for col in e["table"]["header"]:
                     if col not in e["hints"]:
                         res.append(out("TP-K03", F, where, f"열 힌트가 없다: {col}"))
+        # K14 정의 ID 접두어
+        for e in entries:
+            pf = e["prefix"]
+            if pf == "없음":
+                continue
+            if not re.fullmatch(r"[A-Z]{1,3}", pf):
+                res.append(out("TP-K14", F, f"{w} 표:{e['key']}", f"정의 ID 접두어 형식 오류: {pf}"))
+            elif pf in seen_prefix and seen_prefix[pf] != w:
+                res.append(out("TP-K14", F, f"{w} 표:{e['key']}", f"정의 ID 접두어 `{pf}`가 {seen_prefix[pf]}와 겹친다"))
+            seen_prefix.setdefault(pf, w)
         # K07 정의 ID 참조 순서
         defined = [(e["prefix"], e["section"]) for e in entries if e["prefix"] != "없음"]
         sec_order = sorted({e["section"] for e in entries})
