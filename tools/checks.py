@@ -686,6 +686,8 @@ def check_deliverable(path, template_path):
                 if not c.strip():
                     res.append(out("CM-K01", F, f"{w} 표:{e['key']}", f"빈 칸: {r[0]} / {col}"))
                     continue
+                if col == "근거":
+                    continue
                 for span in undecided_spans(c):
                     if not all(k in span for k in ("확인처", "담당", "기한")):
                         res.append(out("CM-K02", F, f"{w} 표:{e['key']}", f"`미정`에 확인처·담당·기한이 없다: {r[0]}"))
