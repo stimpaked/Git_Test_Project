@@ -6,7 +6,7 @@ import re
 import subprocess
 from collections import Counter
 
-from lib import (DATA, CONVERSIONS, DOCS, GUIDES, LOGS_DIR, ROOT, TEMPLATES, TERM, load_interfaces,
+from lib import (KEY_RE, DATA, CONVERSIONS, DOCS, GUIDES, LOGS_DIR, ROOT, TEMPLATES, TERM, load_interfaces,
                  parse_steps, parse_tables, parse_value_tables, read, rel, sample_terms, IF_HEADER)
 from build import GEN_END, current_block, gen_block
 
@@ -670,6 +670,10 @@ def check_deliverable(path, template_path):
             res.append(out("TP-K10", F, w, f"표:{e['key']} 위에 열 힌트 표가 남아 있다"))
         if e["table"] and "힌트" in e["table"]["header"]:
             res.append(out("TP-K10", F, w, f"표:{e['key']}에 힌트 열이 남아 있다"))
+    # TP-K15 표 없는 필수 절
+    for sec in required_free_sections(ttext):
+        if sec not in text:
+            res.append(out("TP-K15", F, w, f"표 없는 필수 절이 없다: {sec}"))
     # TP-K13 구조
     tentries, _tl, _tt = parse_value_tables(ttext)
     tk = [e["key"] for e in tentries]
@@ -738,6 +742,23 @@ def split_outside_parens(cell):
             cur += ch
     parts.append(cur)
     return parts
+
+
+def required_free_sections(ttext):
+    """템플릿에서 표 키 주석이 없고 [선택]도 완료 체크도 아닌 `##` 절의 제목(번호 포함)."""
+    lines = ttext.split("\n")
+    heads = [i for i, l in enumerate(lines) if l.startswith("## ")]
+    out_ = []
+    for k, i in enumerate(heads):
+        end = heads[k + 1] if k + 1 < len(heads) else len(lines)
+        title = lines[i]
+        if "[선택]" in title or "완료 체크" in title:
+            continue
+        if any(KEY_RE.search(l) for l in lines[i:end]):
+            continue
+        if re.match(r"^## \d+\.", title):
+            out_.append(title.strip())
+    return out_
 
 
 SRC_TYPES = ("조사", "내부 자료", "일반 지식(미검증)", "가정")
