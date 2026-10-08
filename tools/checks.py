@@ -686,8 +686,9 @@ def check_deliverable(path, template_path):
                 if not c.strip():
                     res.append(out("CM-K01", F, f"{w} 표:{e['key']}", f"빈 칸: {r[0]} / {col}"))
                     continue
-                if _closing(c) == "미정" and not all(k in c for k in ("확인처", "담당", "기한")):
-                    res.append(out("CM-K02", F, f"{w} 표:{e['key']}", f"`미정`에 확인처·담당·기한이 없다: {r[0]}"))
+                for span in undecided_spans(c):
+                    if not all(k in span for k in ("확인처", "담당", "기한")):
+                        res.append(out("CM-K02", F, f"{w} 표:{e['key']}", f"`미정`에 확인처·담당·기한이 없다: {r[0]}"))
                 if _closing(c) == "해당 없음" and len(c.replace("`", "").replace("해당 없음", "").strip(" ():,")) < 2:
                     res.append(out("CM-K02", F, f"{w} 표:{e['key']}", f"`해당 없음`에 사유가 없다: {r[0]}"))
             if e["table"]["header"][-1] == "근거" and r and not r[-1].strip():
@@ -736,7 +737,7 @@ def check_evidence(entries, w):
             continue
         for r in t["rows"]:
             for c in r[:-1]:
-                if _closing(c) == "미정":
+                if undecided_spans(c):
                     n_undecided += 1
             cell = r[-1].strip()
             if not cell or _closing(cell):
@@ -762,6 +763,33 @@ def _closing(c):
     """칸이 `미정`·`해당 없음`으로 닫혔는지. 백틱으로 감싼 표기도 같게 본다."""
     t = c.strip().replace("`", "")
     return "미정" if t.startswith("미정") else "해당 없음" if t.startswith("해당 없음") else None
+
+
+def undecided_spans(c):
+    """칸 안의 `미정`마다 뒤따르는 괄호 안 내용을 돌려준다. 괄호가 없으면 빈 문자열.
+
+    값과 `미정`을 한 칸에 이어 쓰는 것을 허용하므로(CM-07) 칸의 어디에 있어도 찾는다.
+    """
+    t = c.replace("`", "")
+    out_ = []
+    for m in re.finditer(r"미정(?![가-힣])", t):
+        rest = t[m.end():].lstrip()
+        if not rest.startswith("("):
+            out_.append("")
+            continue
+        depth, buf = 0, ""
+        for ch in rest:
+            if ch == "(":
+                depth += 1
+                if depth == 1:
+                    continue
+            elif ch == ")":
+                depth -= 1
+                if depth == 0:
+                    break
+            buf += ch
+        out_.append(buf)
+    return out_
 
 
 def terms_in(text):
