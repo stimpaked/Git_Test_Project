@@ -231,13 +231,16 @@ def check_guides():
 # ---------------------------------------------------------------- 결정 로그 (DR)
 
 ENTRY_RE = re.compile(r"^### (\S+) · (.*)$")
-ID_RE = re.compile(r"^DL-(SD|ST|CM|DR|TP|GD|CV|IR|CG|SYS|\d\d)-(\d{3})$")
+ID_RE = re.compile(r"^DL-(SD|ST|CM|DR|TP|GD|CV|IR|CG|TL|SYS|\d\d)-(\d{3})$")
 REQUIRED = ["날짜", "대상", "결정 주체", "배경", "검토한 대안", "결정", "이유", "영향", "상태"]
 SUBJECTS = ["사용자 결정", "사용자 승인", "유지보수자 판단"]
 
 
 def log_files():
     files = sorted(DOCS.glob("*_decision-log.md")) + sorted(LOGS_DIR.glob("*_decision-log.md"))
+    tool = ROOT / "tools" / "tools-decision-log.md"
+    if tool.exists():
+        files.append(tool)
     tmp = DOCS / "결정로그_체계.md"
     if tmp.exists():
         files.append(tmp)
@@ -696,8 +699,45 @@ def check_deliverable(path, template_path):
                     for h in t["hints"].values():
                         if len(c) >= 12 and c in h:
                             res.append(out("TP-K11", W, f"{w} 표:{e['key']}", f"값이 힌트의 예시와 같다: {c[:30]}"))
+    res += check_evidence(entries, w)
     for t in terms_in(text):
         res.append(out("CM-K07", W, w, f"샘플 고유 단어: {t}"))
+    return res
+
+
+SRC_TYPES = ("조사", "내부 자료", "일반 지식(미검증)", "가정")
+REF_RE = re.compile(r"^(\d\d[ .]|[A-Z]{1,3}-\d)")
+
+
+def check_evidence(entries, w):
+    """CM-K04 근거 칸의 형식, CM-K06 미정 개수와 미검증 후보 비율."""
+    res = []
+    n_undecided = rows = weak = 0
+    for e in entries:
+        t = e["table"]
+        if not t or t["header"][-1] != "근거":
+            continue
+        for r in t["rows"]:
+            for c in r[:-1]:
+                if c.startswith("미정"):
+                    n_undecided += 1
+            cell = r[-1].strip()
+            if not cell or cell.startswith(("미정", "해당 없음")):
+                continue
+            rows += 1
+            kinds = []
+            for seg in [x.strip() for x in cell.split(";") if x.strip()]:
+                tp = next((s for s in SRC_TYPES if seg.startswith(s + ":")), None)
+                if tp:
+                    kinds.append(tp)
+                elif REF_RE.match(seg):
+                    kinds.append("참조")
+                else:
+                    res.append(out("CM-K04", F, f"{w} 표:{e['key']}", f"근거가 출처 유형이나 참조로 시작하지 않는다: {r[0]} / {seg[:30]}"))
+            if kinds and all(k in ("일반 지식(미검증)", "가정") for k in kinds):
+                weak += 1
+    ratio = f"{weak}/{rows}" if rows else "0/0"
+    res.append(out("CM-K06", I, w, f"`미정` {n_undecided}칸, 근거가 모두 일반 지식·가정인 행 {ratio}"))
     return res
 
 

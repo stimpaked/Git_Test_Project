@@ -17,5 +17,6 @@
 | `data/interfaces.csv` | 인터페이스 표 원본 (`docs/규칙_인터페이스표.md`) |
 | `data/sample_terms.txt` | 샘플 고유 단어 (CM-17) |
 | `data/dr_exempt.txt` | 규칙 확정 전 결정 로그 항목 면제 목록 (DR-13) |
+| `tools-decision-log.md` | 도구의 결정 로그와 알려진 한계 |
 
-구현하지 못한 검사: `CM-K04~K06`(수정목록 C21), `CV-K08`.
+구현하지 못한 검사와 알려진 한계는 `tools/tools-decision-log.md` A절에 있다.
