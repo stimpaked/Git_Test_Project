@@ -25,7 +25,7 @@ def connections_for(nn):
     for r in rows:
         sender, recv_step, direction = r[1], r[2], r[7]
         s_step = sender[:2] if sender[:2].isdigit() else None
-        if recv_step == nn:
+        if recv_step == nn and direction != "환류":
             if sender.startswith("EXT:"):
                 if sender[4:] not in ext:
                     ext.append(sender[4:])
