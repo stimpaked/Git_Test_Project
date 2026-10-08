@@ -705,6 +705,23 @@ def check_deliverable(path, template_path):
     return res
 
 
+def split_outside_parens(cell):
+    """`;`로 나누되 괄호 안의 `;`는 경계로 보지 않는다."""
+    parts, depth, cur = [], 0, ""
+    for ch in cell:
+        if ch in "([":
+            depth += 1
+        elif ch in ")]" and depth:
+            depth -= 1
+        if ch == ";" and depth == 0:
+            parts.append(cur)
+            cur = ""
+        else:
+            cur += ch
+    parts.append(cur)
+    return parts
+
+
 SRC_TYPES = ("조사", "내부 자료", "일반 지식(미검증)", "가정")
 REF_RE = re.compile(r"^(\d\d[ .]|[A-Z]{1,3}-\d)")
 
@@ -726,7 +743,7 @@ def check_evidence(entries, w):
                 continue
             rows += 1
             kinds = []
-            for seg in [x.strip() for x in cell.split(";") if x.strip()]:
+            for seg in [x.strip() for x in split_outside_parens(cell) if x.strip()]:
                 tp = next((s for s in SRC_TYPES if seg.startswith(s + ":")), None)
                 if tp:
                     kinds.append(tp)
