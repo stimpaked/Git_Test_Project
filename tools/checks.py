@@ -772,8 +772,13 @@ def undecided_spans(c):
     """
     t = c.replace("`", "")
     out_ = []
+    # 산문에 쓴 "미정"이라는 단어는 세지 않는다. 칸 첫머리이거나, 백틱으로 감쌌거나, 바로 괄호가 이어질 때만 본다.
     for m in re.finditer(r"미정(?![가-힣])", t):
         rest = t[m.end():].lstrip()
+        at_start = t[:m.start()].strip() == ""
+        ticked = "`미정`" in c and c.replace("`", "")[m.start():m.end()] == "미정"
+        if not (at_start or rest.startswith("(") or ticked):
+            continue
         if not rest.startswith("("):
             out_.append("")
             continue
