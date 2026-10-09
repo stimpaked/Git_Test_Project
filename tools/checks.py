@@ -571,12 +571,12 @@ def check_interfaces():
                 res.append(out("IR-K01", F, where, f"방향 값 오류: {direction}"))
         # K02
         is_ext = snd.startswith("EXT:")
-        m = re.fullmatch(r"IF-(\d\d|EX)-(\d{3})", cid)
+        m = re.fullmatch(r"IF-(\d\d|EX-\d\d)-(\d{3})", cid)
         s_step = snd[:2] if snd[:2].isdigit() else None
         if not m:
             res.append(out("IR-K02", F, where, f"연결 ID 형식 오류: {cid}"))
-        elif is_ext and m.group(1) != "EX":
-            res.append(out("IR-K02", F, where, "외부 입력은 IF-EX-nnn이어야 한다"))
+        elif is_ext and m.group(1) != f"EX-{recv}":
+            res.append(out("IR-K02", F, where, "외부 입력은 IF-EX-<받는 단계>-nnn이어야 한다"))
         elif not is_ext and m.group(1) != s_step:
             res.append(out("IR-K02", F, where, "연결 ID의 단계 번호가 보내는 단계와 다르다"))
         if cid in seen:
