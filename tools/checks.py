@@ -590,9 +590,10 @@ def check_interfaces():
             name = snd[4:]
             if not re.fullmatch(r"[0-9A-Za-z_가-힣]+", name):
                 res.append(out("IR-K03", F, where, f"외부 입력 이름 형식 오류: {name}"))
-            if name in ext_names:
-                res.append(out("IR-K08", F, where, f"외부 입력 이름 중복: {name}"))
-            ext_names.add(name)
+            ext_key = (name, recv, rfield)
+            if ext_key in ext_names:
+                res.append(out("IR-K08", F, where, f"외부 입력 이름과 받는 쪽의 조합이 중복된다: {name} → {rfield}"))
+            ext_names.add(ext_key)
         elif re.fullmatch(r"\d\d", snd):
             n_prov += 1
             if snd not in steps:
