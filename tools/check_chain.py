@@ -4,7 +4,7 @@
 - 정의: 표 키 주석 `<!-- 표: 키 | 정의 ID: 접두어 -->` 아래 표의 첫 칸이 `접두어-숫자`로 시작하는 값
 - 참조: 산출물 어디에서든 정의된 접두어와 같은 접두어로 쓰인 `접두어-숫자`
 - 정의된 접두어에 한해서만 본다. 01~03번처럼 템플릿이 없는 단계의 ID는 검사하지 못한다.
-- 후보 전수 소진(CH-K03~05): 통합·정규화 산출물(표 `기능목록`의 `병합 후보`, 표 `제외목록`의 `후보 ID`)이 있으면, 나머지 산출물의 후보 표(헤더에 `구분`과 `후보 문장` 또는 `기능 후보`가 있는 값 표)의 모든 후보 ID가 두 곳 중 정확히 한 번 나오는지 본다.
+- 후보 전수 소진(CH-K03~05): 통합·정규화 산출물(표 `기능목록`의 `병합 후보`, 표 `제외목록`의 `후보 ID`)이 있으면, 나머지 산출물의 후보 표(헤더에 `구분`과 `후보 문장` 또는 `기능 후보`가 있는 값 표)의 모든 후보 ID가 두 곳 중 정확히 한 번 나오는지 본다. 도메인 공통·고유 산출물(표 `후보판정`)도 있으면 후보 표의 후보가 후보판정에 행을 가졌는지 본다(CH-K07, 경고).
 실패가 있으면 종료 코드 1.
 """
 import re
@@ -74,9 +74,16 @@ def _pool_ids(entry):
 def check_exhaust(paths):
     res = []
     merged, excluded, pool, src = [], [], {}, None
+    judged, judge_src = set(), None
     for p in paths:
         entries, _l, _t = parse_value_tables(read(p))
         keys = {e["key"] for e in entries}
+        if "후보판정" in keys and judge_src is None:
+            judge_src = p
+            for e in entries:
+                if e["key"] == "후보판정":
+                    for c in _cells(e, "후보 ID"):
+                        judged |= {x.strip() for x in c.split(",") if x.strip()}
         if "기능목록" in keys and "제외목록" in keys and src is None:
             src = p
             for e in entries:
@@ -104,6 +111,11 @@ def check_exhaust(paths):
             res.append(("CH-K04", "실패", rel(src), f"후보가 {n}번 나온다: {i}"))
         elif i not in pool:
             res.append(("CH-K05", "경고", rel(src), f"후보 풀로 알아본 표에 없는 ID다(열 이름이 달라 알아보지 못한 후보 표일 수 있다): {i}"))
+    if judge_src is not None:
+        own = rel(judge_src)
+        for i, where in sorted(pool.items()):
+            if i not in judged and not where[0].startswith(own):
+                res.append(("CH-K07", "경고", rel(src), f"20번 후보판정에 행이 없는 후보다(환류가 끝나지 않았을 수 있다): {i} ({where[0]})"))
     res.append(("CH-K06", "정보", rel(src), f"후보 풀 {len(pool)}개, 소진 {len(cnt)}개"))
     return res
 
