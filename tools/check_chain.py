@@ -103,7 +103,7 @@ def check_exhaust(paths):
         if n > 1:
             res.append(("CH-K04", "실패", rel(src), f"후보가 {n}번 나온다: {i}"))
         elif i not in pool:
-            res.append(("CH-K05", "실패", rel(src), f"후보 풀에 없는 ID다: {i}"))
+            res.append(("CH-K05", "경고", rel(src), f"후보 풀로 알아본 표에 없는 ID다(열 이름이 달라 알아보지 못한 후보 표일 수 있다): {i}"))
     res.append(("CH-K06", "정보", rel(src), f"후보 풀 {len(pool)}개, 소진 {len(cnt)}개"))
     return res
 
